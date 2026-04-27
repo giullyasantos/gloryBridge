@@ -405,7 +405,7 @@ export default function SongCreatorModal({
               </div>
             </StyleField>
 
-            <StyleField label={`Line Height: ${style.lineHeight}`}>
+            <StyleField label={`Line Height: ${style.lineHeight.toFixed(1)}`}>
               <input
                 type="range"
                 min={1.0}
@@ -413,6 +413,18 @@ export default function SongCreatorModal({
                 step={0.1}
                 value={style.lineHeight}
                 onChange={(e) => setStyle((s) => ({ ...s, lineHeight: Number(e.target.value) }))}
+                className="w-full accent-brand-500"
+              />
+            </StyleField>
+
+            <StyleField label={`Letter Spacing: ${style.letterSpacing.toFixed(2)}em`}>
+              <input
+                type="range"
+                min={-0.05}
+                max={0.3}
+                step={0.01}
+                value={style.letterSpacing}
+                onChange={(e) => setStyle((s) => ({ ...s, letterSpacing: Number(e.target.value) }))}
                 className="w-full accent-brand-500"
               />
             </StyleField>
@@ -425,6 +437,25 @@ export default function SongCreatorModal({
                 {style.textShadow ? 'Shadow On' : 'Shadow Off'}
               </button>
             </StyleField>
+
+            {style.textShadow && (
+              <StyleField label="Shadow Color">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={style.shadowColor}
+                    onChange={(e) => setStyle((s) => ({ ...s, shadowColor: e.target.value }))}
+                    className="w-10 h-10 rounded-lg border border-slate-700 cursor-pointer bg-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={style.shadowColor}
+                    onChange={(e) => setStyle((s) => ({ ...s, shadowColor: e.target.value }))}
+                    className="input flex-1 font-mono text-sm"
+                  />
+                </div>
+              </StyleField>
+            )}
           </div>
         </div>
       )}

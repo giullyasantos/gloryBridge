@@ -53,11 +53,13 @@
 - [x] Label auto-gerada ao trocar tipo (contagem correta de slides existentes)
 
 ### E2-S3 — Customizar estilo visual da música
-- [ ] Cor de fundo e cor da fonte (color picker)
-- [ ] Família e tamanho da fonte
-- [ ] Alinhamento do texto (esquerda, centro, direita)
-- [ ] Peso da fonte e sombra de texto
-- [ ] Preview em tempo real na aba Preview
+- [x] Cor de fundo e cor da fonte (color picker)
+- [x] Família e tamanho da fonte
+- [x] Alinhamento do texto (esquerda, centro, direita)
+- [x] Peso da fonte e sombra de texto
+- [x] Cor da sombra (shadow color picker, visível apenas com shadow ativo)
+- [x] Letter spacing slider
+- [x] Preview em tempo real na aba Preview
 
 ### E2-S4 — Imagem de fundo na música
 - [ ] Botão "Choose Background Image" na aba Style
