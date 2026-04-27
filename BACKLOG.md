@@ -9,24 +9,24 @@
 **Objetivo:** O app roda localmente, dependências instaladas, ambiente pronto para desenvolvimento e contribuição.
 
 ### E1-S1 — Instalar dependências e rodar em modo dev
-- [ ] `npm install` sem erros
-- [ ] `npm run dev` abre janela Electron
-- [ ] Backend Express inicia na porta 3001
-- [ ] Banco JSON é criado com seed (músicas, escrituras, plano de exemplo)
-- [ ] Janela de apresentação abre junto com a janela do operador
+- [x] `npm install` sem erros
+- [x] `npm run dev` abre janela Electron
+- [x] Backend Express inicia na porta 3001
+- [x] Banco JSON é criado com seed (músicas, escrituras, plano de exemplo)
+- [x] Janela de apresentação abre junto com a janela do operador
 
 ### E1-S2 — Organizar estratégia de branches no git
-- [ ] Branch `main` recebe apenas código estável
-- [ ] Branch `develop` para integração
-- [ ] Convenção de branches: `feature/E{n}-S{n}-descricao`
-- [ ] Convenção de commits: `feat(E1-S2): descrição`
-- [ ] Documentar fluxo no README
+- [x] Branch `main` recebe apenas código estável
+- [x] Branch `dev` para integração
+- [x] Convenção de branches: `feature/E{n}-S{n}-descricao`
+- [x] Convenção de commits: `feat(E1-S2): descrição`
+- [x] Documentar fluxo no README
 
 ### E1-S3 — Criar README com instruções de setup
-- [ ] Pré-requisitos (Node 18+, npm)
-- [ ] Como instalar e rodar
-- [ ] Como rodar o build
-- [ ] Screenshot do app
+- [x] Pré-requisitos (Node 18+, npm)
+- [x] Como instalar e rodar
+- [x] Como rodar o build
+- [x] Screenshot do app (pendente — sem display no ambiente CI)
 
 ---
 
