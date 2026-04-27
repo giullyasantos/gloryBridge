@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import type { PresentationState } from '../../src/renderer/src/types'
@@ -210,6 +210,14 @@ ipcMain.handle('display:get-monitors', () => {
     isPrimary: d.bounds.x === 0 && d.bounds.y === 0
   }))
 })
+
+ipcMain.handle(
+  'dialog:open-file',
+  async (_e, { filters, properties }: { filters?: Electron.FileFilter[]; properties?: string[] }) => {
+    const result = await dialog.showOpenDialog({ filters, properties: properties as Electron.OpenDialogOptions['properties'] })
+    return result.canceled ? null : result.filePaths[0]
+  }
+)
 
 // ─── App Lifecycle ─────────────────────────────────────────────────────────────
 

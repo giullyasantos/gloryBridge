@@ -32,6 +32,13 @@ const api = {
   display: {
     getMonitors: () => ipcRenderer.invoke('display:get-monitors')
   },
+  // Native file dialog
+  dialog: {
+    openFile: (options: {
+      filters?: Array<{ name: string; extensions: string[] }>
+      properties?: string[]
+    }): Promise<string | null> => ipcRenderer.invoke('dialog:open-file', options)
+  },
   // Utility
   isElectron: true
 }

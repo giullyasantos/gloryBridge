@@ -62,10 +62,11 @@
 - [x] Preview em tempo real na aba Preview
 
 ### E2-S4 — Imagem de fundo na música
-- [ ] Botão "Choose Background Image" na aba Style
-- [ ] Selecionar arquivo local via `dialog` do Electron
-- [ ] Exibir thumbnail no preview do modal
-- [ ] Refletir imagem no PresentationWindow
+- [x] Botão "Choose Background Image" na aba Style
+- [x] Selecionar arquivo local via `dialog:open-file` IPC (Electron native dialog)
+- [x] Exibir thumbnail no preview do modal
+- [x] Refletir imagem no PresentationWindow
+- [x] Helper `toFileUrl` para converter paths locais em `file://` URLs
 
 ### E2-S5 — Tradução automática de música com IA
 - [ ] Botões ES / PT no SongCreatorModal

@@ -3,6 +3,9 @@ import { usePresentationStore } from '../store/usePresentationStore'
 import { useServiceStore } from '../store/useServiceStore'
 import type { ServiceItem, SongStyle, SlideContent } from '../types'
 
+const toFileUrl = (path: string): string =>
+  path.startsWith('file://') || path.startsWith('http') ? path : `file://${path}`
+
 // ─── Slide renderer ───────────────────────────────────────────────────────────
 
 function resolveSlideContent(item: ServiceItem | undefined, slideIndex: number, languages: string[], bilingualMode: boolean): SlideContent | null {
@@ -186,7 +189,7 @@ export default function PresentationWindow(): JSX.Element {
       className="w-screen h-screen overflow-hidden flex items-center justify-center"
       style={{
         backgroundColor: content.backgroundColor ?? '#000000',
-        backgroundImage: content.backgroundImage ? `url(${content.backgroundImage})` : undefined,
+        backgroundImage: content.backgroundImage ? `url(${toFileUrl(content.backgroundImage)})` : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center'
       }}

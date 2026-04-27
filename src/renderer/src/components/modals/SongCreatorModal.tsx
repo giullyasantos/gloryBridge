@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Trash2, GripVertical, Sparkles, Loader2, Eye, Palette } from 'lucide-react'
+import { Plus, Trash2, GripVertical, Sparkles, Loader2, Eye, Palette, ImageIcon, FolderOpen, X as XIcon } from 'lucide-react'
 import {
   DndContext,
   closestCenter,
@@ -140,6 +140,20 @@ export default function SongCreatorModal({
       const newIndex = prev.findIndex((s) => s._key === over.id)
       return arrayMove(prev, oldIndex, newIndex).map((s, i) => ({ ...s, order: i }))
     })
+  }
+
+  const handleChooseBackground = async (): Promise<void> => {
+    if (!window.electron) {
+      addToast('File picker only available in the desktop app', 'warning')
+      return
+    }
+    const filePath = await window.electron.dialog.openFile({
+      filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'] }],
+      properties: ['openFile']
+    })
+    if (filePath) {
+      setStyle((s) => ({ ...s, backgroundImage: filePath }))
+    }
   }
 
   const handleAITranslate = async (targetLang: string): Promise<void> => {
@@ -318,6 +332,41 @@ export default function SongCreatorModal({
       {/* Tab: Style */}
       {tab === 'style' && (
         <div className="p-6 space-y-4">
+          {/* Background image — full width */}
+          <StyleField label="Background Image">
+            <div className="flex items-center gap-2">
+              {style.backgroundImage ? (
+                <div className="relative w-16 h-10 rounded-lg overflow-hidden border border-slate-700 shrink-0">
+                  <img
+                    src={`file://${style.backgroundImage}`}
+                    alt="bg"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-16 h-10 rounded-lg border border-dashed border-slate-700 flex items-center justify-center shrink-0">
+                  <ImageIcon size={14} className="text-slate-600" />
+                </div>
+              )}
+              <button
+                onClick={handleChooseBackground}
+                className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 text-xs transition-colors"
+              >
+                <FolderOpen size={13} />
+                {style.backgroundImage ? 'Change Image' : 'Choose Image'}
+              </button>
+              {style.backgroundImage && (
+                <button
+                  onClick={() => setStyle((s) => ({ ...s, backgroundImage: undefined }))}
+                  className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+                  title="Remove background image"
+                >
+                  <XIcon size={13} />
+                </button>
+              )}
+            </div>
+          </StyleField>
+
           <div className="grid grid-cols-2 gap-4">
             <StyleField label="Background Color">
               <div className="flex items-center gap-2">
@@ -468,7 +517,9 @@ export default function SongCreatorModal({
             className="aspect-video w-full rounded-xl flex items-center justify-center overflow-hidden relative"
             style={{
               backgroundColor: style.backgroundColor,
-              backgroundImage: style.backgroundImage ? `url(${style.backgroundImage})` : undefined,
+              backgroundImage: style.backgroundImage
+                ? `url(${style.backgroundImage.startsWith('file://') || style.backgroundImage.startsWith('http') ? style.backgroundImage : `file://${style.backgroundImage}`})`
+                : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center'
             }}
