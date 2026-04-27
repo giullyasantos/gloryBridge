@@ -158,15 +158,21 @@ export default function SongCreatorModal({
 
   const handleAITranslate = async (targetLang: string): Promise<void> => {
     if (!song?.id) {
-      addToast('Save the song first to translate', 'warning')
+      addToast('Save the song first before translating', 'warning')
       return
     }
     setIsTranslating(true)
     try {
-      await api.songs.translate(song.id, targetLang)
-      addToast(`Translation to ${targetLang.toUpperCase()} in progress`, 'success')
-    } catch {
-      addToast('Translation failed — check AI API key in Settings', 'error')
+      const updated = await api.songs.translate(song.id, targetLang)
+      addToast(`Translated to ${targetLang.toUpperCase()} successfully`, 'success')
+      onSaved(updated)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('API key not configured')) {
+        addToast('Set your Claude API key in Settings first', 'error')
+      } else {
+        addToast('Translation failed — check your API key in Settings', 'error')
+      }
     } finally {
       setIsTranslating(false)
     }

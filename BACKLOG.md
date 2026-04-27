@@ -69,10 +69,11 @@
 - [x] Helper `toFileUrl` para converter paths locais em `file://` URLs
 
 ### E2-S5 — Tradução automática de música com IA
-- [ ] Botões ES / PT no SongCreatorModal
-- [ ] Chamar `POST /api/v1/ai/translate` com slides da música
-- [ ] Salvar tradução vinculada à música
-- [ ] Música aparece com badge dos idiomas disponíveis
+- [x] Botões ES / PT no SongCreatorModal
+- [x] `POST /songs/:id/translate` implementado (chama Claude com todos os slides)
+- [x] Salvar tradução vinculada à música no banco (db.translations.upsert)
+- [x] Música aparece com badge dos idiomas disponíveis após tradução
+- [x] Mensagem de erro específica quando API key não configurada
 
 ### E2-S6 — Editar e deletar músicas existentes
 - [ ] Botão editar abre modal preenchido com dados da música

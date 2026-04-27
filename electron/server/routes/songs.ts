@@ -75,9 +75,59 @@ router.delete('/:id', (req, res) => {
   res.status(204).end()
 })
 
-// POST /songs/:id/translate — stub (real AI in ai route)
-router.post('/:id/translate', (req, res) => {
-  res.status(202).json({ message: 'Translation queued' })
+// POST /songs/:id/translate — translate all slides via Claude and persist
+router.post('/:id/translate', async (req, res) => {
+  const { targetLanguage } = req.body
+  if (!targetLanguage) return res.status(400).json({ error: 'targetLanguage required' })
+
+  const song = hydrate(req.params.id)
+  if (!song) return res.status(404).json({ error: 'Not found' })
+  if (!song.slides.length) return res.status(400).json({ error: 'Song has no slides to translate' })
+
+  const apiKey = db.settings.all()['ai.apiKey']
+  if (!apiKey) return res.status(400).json({ error: 'AI API key not configured in Settings' })
+
+  const langNames: Record<string, string> = { en: 'English', es: 'Spanish', pt: 'Portuguese' }
+  const langName = langNames[targetLanguage] ?? targetLanguage
+  const slidesText = song.slides.map((s) => `[${s.label}]\n${s.content}`).join('\n\n')
+
+  const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      messages: [{
+        role: 'user',
+        content: `Translate the following worship song slides to ${langName}. Keep the [Label] markers exactly as-is at the start of each section. Preserve all line breaks within each section. Return only the translated content:\n\n${slidesText}`
+      }]
+    })
+  })
+
+  if (!aiRes.ok) return res.status(500).json({ error: `Claude API error: ${aiRes.status}` })
+
+  const aiData = await aiRes.json() as { content: Array<{ type: string; text: string }> }
+  const translatedText = aiData.content.find((c) => c.type === 'text')?.text ?? ''
+
+  const sections = translatedText.split(/\n\n(?=\[)/)
+  const translatedSlides = song.slides.map((slide, i) => ({
+    slideId: slide.id,
+    content: (sections[i] ?? '').replace(/^\[.*?\]\n?/, '').trim()
+  }))
+
+  db.translations.upsert({
+    id: randomUUID(),
+    songId: song.id,
+    language: targetLanguage,
+    title: song.title,
+    slides: translatedSlides
+  })
+
+  res.json(hydrate(song.id))
 })
 
 export default router
