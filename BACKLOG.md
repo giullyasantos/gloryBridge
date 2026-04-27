@@ -35,11 +35,14 @@
 **Objetivo:** Operador cria, edita, estiliza e organiza músicas com slides prontos para apresentação.
 
 ### E2-S1 — Criar e listar músicas na biblioteca
-- [ ] Botão "New Song" abre SongCreatorModal
-- [ ] Campos: título, artista, idioma
-- [ ] Salvar via `POST /api/v1/songs`
-- [ ] Música aparece na lista após salvar
-- [ ] Busca por nome funcional
+- [x] Botão "New Song" abre SongCreatorModal
+- [x] Campos: título, artista, idioma
+- [x] Salvar via `POST /api/v1/songs`
+- [x] Música aparece na lista após salvar
+- [x] Busca por nome funcional (Enter busca, X limpa e reseta lista)
+- [x] Ícone de editar corrigido (Play → Pencil)
+- [x] Delete com confirmação antes de remover
+- [x] `addItem` corrigido para não atualizar estado de plan errado
 
 ### E2-S2 — Editor de slides com seções (Verse, Chorus, Bridge…)
 - [ ] Adicionar seção com tipo (Intro, Verse, Pre-Chorus, Chorus, Bridge, Outro)

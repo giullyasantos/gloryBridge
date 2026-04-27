@@ -69,12 +69,12 @@ export const useServiceStore = create<ServiceStore>((set, get) => ({
 
   addItem: async (planId: string, type: ServiceItemType, refId?: string, text?: string) => {
     const plan = get().activePlan
-    if (!plan) return
+    if (!plan || plan.id !== planId) return
     const newItem = await api.services.addItem(planId, { type, refId, text })
-    const updatedPlan = { ...plan, items: [...plan.items, newItem] }
-    set((s) => ({
-      activePlan: s.activePlan?.id === planId ? updatedPlan : s.activePlan
-    }))
+    set((s) => {
+      if (!s.activePlan || s.activePlan.id !== planId) return s
+      return { activePlan: { ...s.activePlan, items: [...s.activePlan.items, newItem] } }
+    })
   },
 
   removeItem: async (planId: string, itemId: string) => {

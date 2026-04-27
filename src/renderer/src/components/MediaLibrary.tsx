@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Music, Video, Image, Volume2, Search, Plus, Trash2, Play, Upload, Loader2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Music, Video, Image, Volume2, Search, Plus, Trash2, Pencil, Upload, Loader2, X } from 'lucide-react'
 import Button from './ui/Button'
 import SongCreatorModal from './modals/SongCreatorModal'
 import { api } from '../api/client'
@@ -17,6 +17,7 @@ export default function MediaLibrary(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false)
   const [showSongCreator, setShowSongCreator] = useState(false)
   const [editingSong, setEditingSong] = useState<Song | null>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   const { activePlan, addItem } = useServiceStore()
   const { addToast } = useAppStore()
@@ -24,6 +25,11 @@ export default function MediaLibrary(): JSX.Element {
   useEffect(() => {
     loadData()
   }, [tab])
+
+  // Reset list when search is cleared
+  useEffect(() => {
+    if (search === '') loadData()
+  }, [search])
 
   const loadData = async (): Promise<void> => {
     setIsLoading(true)
@@ -52,10 +58,11 @@ export default function MediaLibrary(): JSX.Element {
     addToast(`"${song.title}" added to service`, 'success')
   }
 
-  const handleDeleteSong = async (id: string): Promise<void> => {
-    await api.songs.delete(id)
-    setSongs((s) => s.filter((song) => song.id !== id))
-    addToast('Song deleted', 'info')
+  const handleDeleteSong = async (song: Song): Promise<void> => {
+    if (!window.confirm(`Delete "${song.title}"? This cannot be undone.`)) return
+    await api.songs.delete(song.id)
+    setSongs((s) => s.filter((x) => x.id !== song.id))
+    addToast(`"${song.title}" deleted`, 'info')
   }
 
   const handleSongSaved = (song: Song): void => {
@@ -121,13 +128,22 @@ export default function MediaLibrary(): JSX.Element {
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
           <input
+            ref={searchRef}
             type="text"
             placeholder={`Search ${tab}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && loadData()}
-            className="input pl-8 text-sm"
+            className="input pl-8 pr-8 text-sm"
           />
+          {search && (
+            <button
+              onClick={() => { setSearch(''); searchRef.current?.focus() }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -155,7 +171,7 @@ export default function MediaLibrary(): JSX.Element {
                     setEditingSong(song)
                     setShowSongCreator(true)
                   }}
-                  onDelete={() => handleDeleteSong(song.id)}
+                  onDelete={() => handleDeleteSong(song)}
                 />
               ))}
             </div>
@@ -228,8 +244,8 @@ function SongRow({
         </div>
       </div>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onClick={onEdit} className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-lg transition-colors" title="Edit">
-          <Play size={13} />
+        <button onClick={onEdit} className="p-1.5 text-slate-500 hover:text-slate-300 hover:bg-slate-700 rounded-lg transition-colors" title="Edit song">
+          <Pencil size={13} />
         </button>
         <button onClick={onAdd} className="p-1.5 text-slate-500 hover:text-green-400 hover:bg-green-900/20 rounded-lg transition-colors" title="Add to service">
           <Plus size={13} />
