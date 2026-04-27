@@ -1,10 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2, GripVertical, Sparkles, Loader2, Eye, Palette } from 'lucide-react'
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import { api } from '../../api/client'
 import { useAppStore } from '../../store/useAppStore'
 import type { Song, SongSlide, SlideType, SongStyle } from '../../types'
+
+type LocalSlide = Omit<SongSlide, 'id' | 'songId'> & { _key: string }
 
 interface SongCreatorModalProps {
   open: boolean
@@ -47,14 +66,21 @@ export default function SongCreatorModal({
   const [title, setTitle] = useState('')
   const [artist, setArtist] = useState('')
   const [language, setLanguage] = useState('en')
-  const [slides, setSlides] = useState<Omit<SongSlide, 'id' | 'songId'>[]>([
-    { type: 'verse', label: 'Verse 1', content: '', order: 0 }
+  const [slides, setSlides] = useState<LocalSlide[]>([
+    { type: 'verse', label: 'Verse 1', content: '', order: 0, _key: '1' }
   ])
   const [style, setStyle] = useState(DEFAULT_STYLE)
   const [isSaving, setIsSaving] = useState(false)
   const [isTranslating, setIsTranslating] = useState(false)
   const [previewSlideIndex, setPreviewSlideIndex] = useState(0)
   const { addToast } = useAppStore()
+  const keyCounter = useRef(1)
+  const nextKey = (): string => String(++keyCounter.current)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
 
   useEffect(() => {
     if (song) {
@@ -66,7 +92,8 @@ export default function SongCreatorModal({
           type: s.type,
           label: s.label,
           content: s.content,
-          order: s.order
+          order: s.order,
+          _key: nextKey()
         }))
       )
       if (song.style) {
@@ -83,30 +110,36 @@ export default function SongCreatorModal({
     setTitle('')
     setArtist('')
     setLanguage('en')
-    setSlides([{ type: 'verse', label: 'Verse 1', content: '', order: 0 }])
+    setSlides([{ type: 'verse', label: 'Verse 1', content: '', order: 0, _key: nextKey() }])
     setStyle(DEFAULT_STYLE)
   }
 
   const addSlide = (): void => {
-    const counts: Record<SlideType, number> = { intro: 0, verse: 0, 'pre-chorus': 0, chorus: 0, bridge: 0, outro: 0 }
-    slides.forEach((s) => counts[s.type]++)
-    setSlides((s) => [
-      ...s,
-      {
-        type: 'verse',
-        label: `Verse ${counts.verse + 1}`,
-        content: '',
-        order: s.length
-      }
-    ])
+    setSlides((prev) => {
+      const counts: Record<SlideType, number> = { intro: 0, verse: 0, 'pre-chorus': 0, chorus: 0, bridge: 0, outro: 0 }
+      prev.forEach((s) => counts[s.type]++)
+      const type: SlideType = 'verse'
+      const label = `Verse ${counts.verse + 1}`
+      return [...prev, { type, label, content: '', order: prev.length, _key: nextKey() }]
+    })
   }
 
-  const removeSlide = (index: number): void => {
-    setSlides((s) => s.filter((_, i) => i !== index).map((s, i) => ({ ...s, order: i })))
+  const removeSlide = (key: string): void => {
+    setSlides((prev) => prev.filter((s) => s._key !== key).map((s, i) => ({ ...s, order: i })))
   }
 
-  const updateSlide = (index: number, updates: Partial<Omit<SongSlide, 'id' | 'songId'>>): void => {
-    setSlides((s) => s.map((slide, i) => (i === index ? { ...slide, ...updates } : slide)))
+  const updateSlide = (key: string, updates: Partial<Omit<LocalSlide, '_key'>>): void => {
+    setSlides((prev) => prev.map((s) => s._key === key ? { ...s, ...updates } : s))
+  }
+
+  const handleSlideDragEnd = (event: DragEndEvent): void => {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    setSlides((prev) => {
+      const oldIndex = prev.findIndex((s) => s._key === active.id)
+      const newIndex = prev.findIndex((s) => s._key === over.id)
+      return arrayMove(prev, oldIndex, newIndex).map((s, i) => ({ ...s, order: i }))
+    })
   }
 
   const handleAITranslate = async (targetLang: string): Promise<void> => {
@@ -132,7 +165,8 @@ export default function SongCreatorModal({
     }
     setIsSaving(true)
     try {
-      const payload = { title, artist: artist || undefined, language, slides, style }
+      const cleanSlides = slides.map(({ _key, ...rest }) => rest)
+      const payload = { title, artist: artist || undefined, language, slides: cleanSlides, style }
       let saved: Song
       if (song?.id) {
         saved = await api.songs.update(song.id, payload)
@@ -246,18 +280,30 @@ export default function SongCreatorModal({
               <span className="text-xs text-slate-600">{slides.length} slides</span>
             </div>
 
-            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
-              {slides.map((slide, index) => (
-                <SlideEditor
-                  key={index}
-                  slide={slide}
-                  index={index}
-                  onUpdate={(updates) => updateSlide(index, updates)}
-                  onRemove={() => removeSlide(index)}
-                  onFocus={() => setPreviewSlideIndex(index)}
-                />
-              ))}
-            </div>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleSlideDragEnd}
+            >
+              <SortableContext
+                items={slides.map((s) => s._key)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+                  {slides.map((slide, index) => (
+                    <SlideEditor
+                      key={slide._key}
+                      slideKey={slide._key}
+                      slide={slide}
+                      allSlides={slides}
+                      onUpdate={(updates) => updateSlide(slide._key, updates)}
+                      onRemove={() => removeSlide(slide._key)}
+                      onFocus={() => setPreviewSlideIndex(index)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
 
             <button
               onClick={addSlide}
@@ -452,37 +498,53 @@ export default function SongCreatorModal({
   )
 }
 
-// ─── Slide Editor ─────────────────────────────────────────────────────────────
+// ─── Slide Editor (sortable) ──────────────────────────────────────────────────
 
 function SlideEditor({
+  slideKey,
   slide,
-  index,
+  allSlides,
   onUpdate,
   onRemove,
   onFocus
 }: {
-  slide: Omit<SongSlide, 'id' | 'songId'>
-  index: number
-  onUpdate: (updates: Partial<Omit<SongSlide, 'id' | 'songId'>>) => void
+  slideKey: string
+  slide: LocalSlide
+  allSlides: LocalSlide[]
+  onUpdate: (updates: Partial<Omit<LocalSlide, '_key'>>) => void
   onRemove: () => void
   onFocus: () => void
 }): JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: slideKey
+  })
   const typeCfg = SLIDE_TYPES.find((t) => t.value === slide.type) ?? SLIDE_TYPES[1]
 
+  const handleTypeChange = (type: SlideType): void => {
+    const count = allSlides.filter((s) => s.type === type && s._key !== slideKey).length + 1
+    const typeLabel = SLIDE_TYPES.find((t) => t.value === type)?.label ?? type
+    onUpdate({ type, label: count === 1 ? typeLabel : `${typeLabel} ${count}` })
+  }
+
   return (
-    <div className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden group">
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
+      className="bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden group"
+    >
       <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 border-b border-slate-700">
-        <GripVertical size={14} className="text-slate-600 drag-handle" />
+        <button
+          className="text-slate-600 hover:text-slate-400 cursor-grab active:cursor-grabbing touch-none"
+          {...attributes}
+          {...listeners}
+        >
+          <GripVertical size={14} />
+        </button>
         <select
           value={slide.type}
-          onChange={(e) => {
-            const type = e.target.value as SlideType
-            const count = 1
-            const label = `${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')} ${count}`
-            onUpdate({ type, label })
-          }}
+          onChange={(e) => handleTypeChange(e.target.value as SlideType)}
           className="bg-transparent text-xs font-semibold border-none outline-none cursor-pointer"
-          style={{ color: typeCfg.color.replace('text-', '').includes('-') ? undefined : typeCfg.color }}
+          style={{ color: typeCfg.color.replace('text-', '') }}
         >
           {SLIDE_TYPES.map(({ value, label }) => (
             <option key={value} value={value}>{label}</option>

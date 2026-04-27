@@ -45,11 +45,12 @@
 - [x] `addItem` corrigido para não atualizar estado de plan errado
 
 ### E2-S2 — Editor de slides com seções (Verse, Chorus, Bridge…)
-- [ ] Adicionar seção com tipo (Intro, Verse, Pre-Chorus, Chorus, Bridge, Outro)
-- [ ] Editar texto de cada slide
-- [ ] Reordenar slides dentro do modal
-- [ ] Remover slide
-- [ ] Persistir slides via API
+- [x] Adicionar seção com tipo (Intro, Verse, Pre-Chorus, Chorus, Bridge, Outro)
+- [x] Editar texto de cada slide
+- [x] Reordenar slides dentro do modal (DnD com @dnd-kit)
+- [x] Remover slide
+- [x] Persistir slides via API
+- [x] Label auto-gerada ao trocar tipo (contagem correta de slides existentes)
 
 ### E2-S3 — Customizar estilo visual da música
 - [ ] Cor de fundo e cor da fonte (color picker)
