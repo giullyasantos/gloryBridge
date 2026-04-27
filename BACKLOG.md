@@ -76,10 +76,10 @@
 - [x] Mensagem de erro específica quando API key não configurada
 
 ### E2-S6 — Editar e deletar músicas existentes
-- [ ] Botão editar abre modal preenchido com dados da música
-- [ ] Salvar alterações via `PUT /api/v1/songs/:id`
-- [ ] Botão deletar com confirmação
-- [ ] Lista atualizada após deleção
+- [x] Botão editar abre modal preenchido com dados da música
+- [x] Salvar alterações via `PUT /api/v1/songs/:id`
+- [x] Botão deletar com confirmação (implementado em E2-S1)
+- [x] Lista atualizada após deleção
 
 ---
 
